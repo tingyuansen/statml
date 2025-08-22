@@ -43,6 +43,11 @@ We are currently in the process of cleaning up and standardizing all tutorials. 
 - **Topics**: Bayesian linear regression, heteroscedastic noise modeling, conjugate priors, posterior distributions, predictive uncertainty quantification, model calibration, uncertainty decomposition
 - **Application**: Predicting stellar temperatures from APOGEE spectra with properly calibrated uncertainties, demonstrating how Bayesian methods provide principled uncertainty quantification beyond point estimates
 
+### Chapter 6: Linear Regression with Input Uncertainties
+- **File**: `tutorial_chapter_6.ipynb`
+- **Topics**: Attenuation bias (regression dilution), Deming regression, measurement uncertainties in both variables, heteroscedastic error modeling, latent variable inference, forward vs inverse regression
+- **Application**: Using Deming regression to properly account for velocity measurement uncertainties in the Tully-Fisher relation, enabling unbiased calibration of the mass-velocity scaling laws
+
 ### Chapter 7: Classification and Logistic Regression
 - **File**: `tutorial_chapter_7.ipynb`
 - **Topics**: Logistic regression, sigmoid transformation, gradient descent optimization, classification metrics, hyperparameter tuning
