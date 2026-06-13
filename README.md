@@ -1,6 +1,6 @@
 # Statistical Machine Learning for Astronomy
 
-> A graduate-level course that builds machine learning from Bayesian first principles, with uncertainty quantification at its core — each chapter paired with hands-on tutorials on real astronomical data.
+> A course for final-year undergraduates and graduate students that builds machine learning from Bayesian first principles, with uncertainty quantification at its core — each chapter paired with hands-on tutorials on real astronomical data.
 
 **📖 Read online:** **[tingyuansen.github.io/statml](https://tingyuansen.github.io/statml/)**
 &nbsp;·&nbsp; **📄 Full text on arXiv:** [arXiv:2506.12230](https://arxiv.org/abs/2506.12230)
