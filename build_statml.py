@@ -115,6 +115,26 @@ def _strip_first_h1(html: str) -> str:
     return re.sub(r"<h1\b[^>]*>.*?</h1>\s*", "", html, count=1, flags=re.DOTALL)
 
 
+def _normalize_headings(html: str) -> str:
+    """Make the heading hierarchy sensible for the web.
+
+    Pandoc maps \\section->h2, \\subsection->h3, \\subsubsection->h4,
+    \\paragraph->h5. The book uses \\paragraph as a lightweight subsection (to
+    keep the printed table of contents short), so on the web those should read
+    as subsections (h3) — and in the Preface, which uses \\paragraph as its only
+    sectioning, they should read as top-level sections (h2). Promote them
+    accordingly so every heading shows at the right level and in the rail."""
+    soup = BeautifulSoup(html, "html.parser")
+    heads = soup.find_all(re.compile(r"^h[1-6]$"))
+    has_section = any(h.name == "h2" for h in heads)   # h2 == \section
+    for h in heads:
+        if h.name == "h5":          # \paragraph
+            h.name = "h3" if has_section else "h2"
+        elif h.name == "h6":        # \subparagraph
+            h.name = "h4" if has_section else "h3"
+    return str(soup)
+
+
 # Small text fixes for gaps in the source LaTeX (not edited there since the
 # sources are private). Keyed by chapter number.
 CHAPTER_FIXES: dict[int, list[tuple[str, str]]] = {
@@ -124,16 +144,37 @@ CHAPTER_FIXES: dict[int, list[tuple[str, str]]] = {
 
 
 def _fix_math(html: str) -> str:
-    # KaTeX has no eqnarray; aligned is the close equivalent.
-    html = html.replace(r"\begin{eqnarray}", r"\begin{aligned}")
-    html = html.replace(r"\end{eqnarray}", r"\end{aligned}")
-    html = html.replace(r"\begin{eqnarray*}", r"\begin{aligned}")
-    html = html.replace(r"\end{eqnarray*}", r"\end{aligned}")
-    # eqnarray's centred &=& -> single alignment point for aligned
-    html = re.sub(r"&\s*=\s*&", r"&=", html)
-    # drop equation labels (KaTeX errors on \label; we don't number equations)
-    html = re.sub(r"\\label\{[^}]*\}", "", html)
+    """Normalize display-math environments to KaTeX's non-numbered forms.
+
+    Pandoc wraps amsmath environments inside \\[ … \\]. KaTeX auto-numbers
+    equation/align/gather, which (a) draws an equation tag that forces a
+    full-width layout (showing a stray rule/scrollbar under the equation) and
+    (b) uses its own running counter that does not match the book. We don't
+    number equations on the web, so unwrap/convert everything to the plain,
+    un-numbered variants. eqnarray and split are unsupported by KaTeX outright."""
+    repl = {
+        r"\begin{equation*}": "", r"\end{equation*}": "",
+        r"\begin{equation}": "",  r"\end{equation}": "",
+        r"\begin{align*}": r"\begin{aligned}",   r"\end{align*}": r"\end{aligned}",
+        r"\begin{align}": r"\begin{aligned}",     r"\end{align}": r"\end{aligned}",
+        r"\begin{eqnarray*}": r"\begin{aligned}", r"\end{eqnarray*}": r"\end{aligned}",
+        r"\begin{eqnarray}": r"\begin{aligned}",  r"\end{eqnarray}": r"\end{aligned}",
+        r"\begin{gather*}": r"\begin{gathered}",  r"\end{gather*}": r"\end{gathered}",
+        r"\begin{gather}": r"\begin{gathered}",   r"\end{gather}": r"\end{gathered}",
+        r"\begin{split}": r"\begin{aligned}",     r"\end{split}": r"\end{aligned}",
+    }
+    for a, b in repl.items():
+        html = html.replace(a, b)
+    html = re.sub(r"&\s*=\s*&", r"&=", html)        # eqnarray centred &=&
+    html = re.sub(r"\\label\{[^}]*\}", "", html)    # KaTeX errors on \label
     return html
+
+
+def _add_references_heading(html: str) -> str:
+    """citeproc emits the bibliography as a bare div; give it a heading."""
+    return html.replace(
+        '<div class="references', '<h2>References</h2>\n<div class="references', 1
+    )
 
 
 def convert_chapter(num: int) -> str:
@@ -154,6 +195,8 @@ def convert_chapter(num: int) -> str:
     html = _fix_math(html)
     html = _number_figures(html, num)
     html = _strip_first_h1(html)
+    html = _normalize_headings(html)
+    html = _add_references_heading(html)
     return html.strip()
 
 

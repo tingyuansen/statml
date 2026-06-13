@@ -165,8 +165,10 @@ a:hover{ color: var(--accent-deep); }
 .prose img{ max-width:100%; height:auto; display:block; margin:1.6rem auto; border-radius:6px; }
 .prose figure{ margin:1.8rem 0; }
 .prose figcaption, .fig-cap{
-  font-family:var(--font-sans); font-size:13px; color:var(--muted); text-align:center; margin-top:.7rem;
+  font-family:var(--font-sans); font-size:14.5px; color:var(--ink-soft); text-align:center;
+  margin-top:.8rem; line-height:1.5; max-width:42rem; margin-left:auto; margin-right:auto;
 }
+.prose figcaption strong{ color:var(--ink); font-weight:600; }
 
 /* tables in prose */
 .prose table{
@@ -383,6 +385,12 @@ html[data-theme="dark"] .btn-primary{ box-shadow: 0 2px 16px oklch(0.64 0.14 256
 .nb-cell + .prose > h2:first-child { margin-top: 2.6rem; padding-top: 1.2rem; }
 .nb-cell + .prose > h3:first-child { margin-top: 2rem; }
 .nb-cell + .prose > p:first-child  { margin-top: 1.5rem; }
+
+/* references / bibliography (citeproc output) */
+.prose .csl-bib-body{ font-family:var(--font-sans); font-size:15px; line-height:1.55; color:var(--ink-soft); margin-top:1.1rem; }
+.prose .csl-entry{ margin:0 0 .85rem; padding-left:1.6rem; text-indent:-1.6rem; }
+.prose .csl-entry:last-child{ margin-bottom:0; }
+.prose .csl-entry em{ font-style:italic; color:var(--ink); }
 
 /* fenced code blocks that live inside rendered-markdown prose
    (these come from nbconvert's .highlight wrapper, not from a code cell) */
