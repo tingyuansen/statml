@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 ROOT = Path(__file__).parent.resolve()
 DOCS = ROOT / "docs"
@@ -115,23 +115,48 @@ def _strip_first_h1(html: str) -> str:
     return re.sub(r"<h1\b[^>]*>.*?</h1>\s*", "", html, count=1, flags=re.DOTALL)
 
 
+def _strip_trailing_colon(h) -> None:
+    """Remove a trailing ':' from a heading (preserving inner math/markup)."""
+    texts = [t for t in h.descendants if isinstance(t, NavigableString)]
+    if not texts:
+        return
+    last = texts[-1]
+    s = str(last).rstrip()
+    if s.endswith(":"):
+        last.replace_with(NavigableString(s[:-1]))
+
+
 def _normalize_headings(html: str) -> str:
     """Make the heading hierarchy sensible for the web.
 
     Pandoc maps \\section->h2, \\subsection->h3, \\subsubsection->h4,
-    \\paragraph->h5. The book uses \\paragraph as a lightweight subsection (to
-    keep the printed table of contents short), so on the web those should read
-    as subsections (h3) — and in the Preface, which uses \\paragraph as its only
-    sectioning, they should read as top-level sections (h2). Promote them
-    accordingly so every heading shows at the right level and in the rail."""
+    \\paragraph->h5. The book uses \\paragraph as a lightweight section divider
+    (to keep the printed table of contents short). On the web we promote them:
+      * directly under a \\section            -> h3 (a subsection)
+      * nested under a real \\subsection      -> h4 (kept below it)
+      * in the Preface (no \\section at all)  -> h2 (top-level sections)
+    "Further Readings" becomes its own section (h2), and trailing colons left
+    over from run-in \\paragraph titles are dropped."""
     soup = BeautifulSoup(html, "html.parser")
     heads = soup.find_all(re.compile(r"^h[1-6]$"))
     has_section = any(h.name == "h2" for h in heads)   # h2 == \section
+    in_subsection = False
     for h in heads:
-        if h.name == "h5":          # \paragraph
-            h.name = "h3" if has_section else "h2"
-        elif h.name == "h6":        # \subparagraph
+        further = bool(re.match(r"\s*further reading", h.get_text(), re.I))
+        if h.name == "h2":
+            in_subsection = False
+        elif h.name == "h3":          # a real \subsection
+            in_subsection = True
+        elif h.name == "h5":          # \paragraph
+            if further or not has_section:
+                h.name = "h2"
+            elif in_subsection:
+                h.name = "h4"
+            else:
+                h.name = "h3"
+        elif h.name == "h6":          # \subparagraph (rare)
             h.name = "h4" if has_section else "h3"
+        _strip_trailing_colon(h)
     return str(soup)
 
 

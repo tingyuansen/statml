@@ -184,7 +184,7 @@ window.BOOK = {
               "chapter": 8,
               "type": "tutorial",
               "slug": "tutorial_chapter_8",
-              "title": "Strong Lensing Classification with Multi-class Logistic Regression",
+              "title": "Strong Lensing Classification with Multi-Class Logistic Regression",
               "short": "Tutorial 8",
               "parent": "Multi-Class Classification"
             }

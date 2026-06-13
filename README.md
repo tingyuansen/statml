@@ -1,13 +1,12 @@
 # Statistical Machine Learning for Astronomy
 
-> A course for final-year undergraduates and graduate students that builds machine learning from Bayesian first principles, with uncertainty quantification at its core — each chapter paired with hands-on tutorials on real astronomical data.
+> A consistently Bayesian, first-principles treatment of machine learning for astronomy — deriving each method from the ground up, with uncertainty quantification and statistical rigor at its core. For final-year undergraduates and graduate students, each chapter paired with a hands-on tutorial on real astronomical data.
 
 **📖 Read online:** **[tingyuansen.github.io/statml](https://tingyuansen.github.io/statml/)**
 &nbsp;·&nbsp; **📄 Full text on arXiv:** [arXiv:2506.12230](https://arxiv.org/abs/2506.12230)
 
-The online reader renders every textbook chapter alongside its companion tutorial(s),
-with all code and figures preserved inline so you can move between theory and practice
-in one place.
+The online reader places each textbook chapter next to its companion tutorial(s), so
+you can move between theory and practice in one place.
 
 ---
 
@@ -20,9 +19,11 @@ in one place.
 ## About
 
 This repository hosts the companion tutorials for the textbook *Statistical Machine
-Learning for Astronomy* and the source for its online reader. The book develops
-machine learning through the lens of Bayesian inference, emphasizing principled
-uncertainty quantification, and applies each idea to real astronomical problems:
+Learning for Astronomy* and the source for its online reader. The book gives a
+systematic, consistently Bayesian treatment of machine learning for astronomical
+research — deriving each method from first principles and revealing how modern
+techniques connect to their classical statistical foundations, with uncertainty
+quantification throughout. Each chapter is applied to real astronomical problems:
 APOGEE spectra, Gaia photometry, JWST images, Kepler light curves, and more.
 
 - **Foundations** — probability, Bayesian inference, summary statistics
