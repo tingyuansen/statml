@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){try{var t=localStorage.getItem('stig-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<title>Statistical Machine Learning for Astronomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  body{ background: var(--paper); }
+  .cover{ max-width: 72rem; margin:0 auto; padding: 0 2.5rem; }
+
+  .hero{ padding: 6.5rem 0 3.5rem; border-bottom:1px solid var(--rule); }
+  .hero-eyebrow{ font-family:var(--font-sans); font-size:12.5px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin:0 0 1.6rem; display:flex; gap:.8rem; align-items:center; }
+  .hero-eyebrow .line{ width:38px; height:1.5px; background:var(--accent-line); }
+  .hero h1{ font-size: clamp(2.6rem, 6vw, 4.6rem); line-height:1.03; font-weight:700; letter-spacing:-.028em; margin:0; max-width:18ch; }
+  .hero .lede{ font-size: clamp(1.1rem, 1.7vw, 1.32rem); line-height:1.55; color:var(--ink-soft); max-width:44rem; margin:1.8rem 0 0; }
+  .hero-meta{ display:flex; flex-wrap:wrap; gap:2.4rem; margin-top:2.6rem; font-family:var(--font-sans); }
+  .hero-meta .stat .v{ font-size:1.7rem; font-weight:600; letter-spacing:-.02em; color:var(--ink); font-family:var(--font-serif); }
+  .hero-meta .stat .k{ font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:.2rem; }
+  .hero-cta{ display:flex; flex-wrap:wrap; gap:.9rem; margin-top:2.8rem; }
+  .btn{ font-family:var(--font-sans); font-size:14.5px; font-weight:600; padding:.8rem 1.5rem; border-radius:9px; cursor:pointer; transition:transform .14s, background .14s; text-decoration:none; display:inline-flex; align-items:center; gap:.55rem; }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:0 2px 14px oklch(0.5 0.135 256 / .28); }
+  .btn-primary:hover{ background:var(--accent-deep); color:#fff; transform:translateY(-1px); }
+  .btn-ghost{ background:transparent; color:var(--ink); border:1px solid var(--rule); }
+  .btn-ghost:hover{ border-color:var(--accent-line); color:var(--accent-deep); }
+
+  .about{ padding:3.2rem 0; border-bottom:1px solid var(--rule); display:grid; grid-template-columns: 12rem 1fr; gap:2.5rem; }
+  .about-label{ font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); padding-top:.3rem; }
+  .about p{ margin:0 0 1rem; font-size:1.05rem; color:var(--ink-soft); max-width:46rem; }
+  .about p:last-child{ margin-bottom:0; }
+  .about-list{ margin:1.2rem 0 0; padding:0; list-style:none; display:grid; gap:.7rem; max-width:46rem; }
+  .about-list li{ position:relative; padding-left:1.4rem; font-size:1.02rem; color:var(--ink-soft); line-height:1.5; }
+  .about-list li::before{ content:""; position:absolute; left:0; top:.62em; width:6px; height:6px; border-radius:2px; background:var(--accent-line); }
+  .about-list strong{ color:var(--ink); font-weight:600; }
+
+  .toc{ padding: 3.5rem 0 6rem; }
+  .toc-h{ font-family:var(--font-sans); font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 2.5rem; }
+  .part{ margin-bottom: 3rem; }
+  .part-head{ display:flex; align-items:baseline; gap:1rem; margin-bottom:1.1rem; padding-bottom:.7rem; border-bottom:1px solid var(--rule); }
+  .part-num{ font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--accent); letter-spacing:.05em; }
+  .part-title{ font-size:1.45rem; font-weight:700; letter-spacing:-.015em; }
+  .part-blurb{ font-family:var(--font-sans); font-size:13px; color:var(--muted); margin-left:auto; max-width:30rem; text-align:right; line-height:1.45; }
+
+  .ch-block{ max-width:54rem; margin-bottom:.4rem; }
+  .ch-row{ display:grid; grid-template-columns: 2.6rem 1fr; gap:.6rem; align-items:start; padding:.85rem .9rem; border-radius:10px; text-decoration:none; transition:background .14s; border:1px solid transparent; }
+  .ch-row:hover{ background:var(--paper-2); border-color:var(--rule); }
+  .ch-row .cn{ font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--faint); padding-top:.15rem; }
+  .ch-row:hover .cn{ color:var(--accent); }
+  .ch-row .ct{ font-size:1.05rem; font-weight:600; color:var(--ink); line-height:1.25; letter-spacing:-.008em; }
+  .tut-row{ display:flex; gap:.55rem; align-items:baseline; margin:.1rem 0 0 3.5rem; padding:.4rem .7rem; border-radius:8px; text-decoration:none; transition:background .14s; }
+  .tut-row:hover{ background:var(--paper-2); }
+  .tut-row .ti{ font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--accent-deep); background:var(--accent-soft); padding:.12rem .45rem; border-radius:4px; white-space:nowrap; flex:none; }
+  .tut-row .tt{ font-family:var(--font-sans); font-size:13.5px; color:var(--muted); line-height:1.35; }
+  .tut-row:hover .tt{ color:var(--ink); }
+
+  footer{ border-top:1px solid var(--rule); padding:2.8rem 0 4rem; font-family:var(--font-sans); font-size:13.5px; color:var(--muted); line-height:1.6; }
+  footer h3{ font-family:var(--font-sans); font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:2rem 0 .8rem; }
+  footer a{ border-bottom:1px solid var(--accent-line); }
+  footer details summary{ cursor:pointer; color:var(--accent); }
+  footer pre{ font-family:var(--font-mono); font-size:12px; background:var(--paper-2); border:1px solid var(--rule); padding:.9rem 1.1rem; border-radius:8px; margin:.6rem 0; white-space:pre-wrap; overflow-x:auto; color:var(--ink-soft); }
+
+  @media (max-width: 820px){
+    .cover{ padding:0 1.5rem; }
+    .about{ grid-template-columns:1fr; gap:1rem; }
+    .part-blurb{ display:none; }
+    .hero{ padding:4rem 0 2.5rem; }
+    .tut-row{ margin-left:1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+
+  <section class="hero">
+    <p class="hero-eyebrow"><span class="line"></span>An open textbook</p>
+    <h1>Statistical Machine Learning for Astronomy</h1>
+    <p class="lede">A graduate-level course that builds machine learning from Bayesian first principles — with uncertainty quantification at its core. Sixteen chapters of theory, each paired with hands-on tutorials that work real astronomical data end to end, with every plot rendered inline.</p>
+    <div class="hero-meta">
+      <div class="stat"><div class="v">16</div><div class="k">Chapters</div></div>
+      <div class="stat"><div class="v">24</div><div class="k">Tutorials</div></div>
+      <div class="stat"><div class="v">Runnable</div><div class="k">Code &amp; Outputs</div></div>
+    </div>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="reader.html?ch=1">Start reading
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="#contents">Table of contents</a>
+      <a class="btn btn-ghost" href="https://arxiv.org/abs/2506.12230" target="_blank" rel="noopener">Read on arXiv ↗</a>
+    </div>
+  </section>
+
+  <section class="about">
+    <div class="about-label">About this book</div>
+    <div>
+      <p>This site renders <em>Statistical Machine Learning for Astronomy</em> as an interactive reader: each textbook chapter sits alongside the hands-on tutorial(s) that apply it to real data, with code and figures preserved inline so you can read theory and practice together.</p>
+      <ul class="about-list">
+        <li><strong>Bayesian by design</strong> — inference, priors, and posteriors as the organizing principle, not an afterthought.</li>
+        <li><strong>Uncertainty quantification</strong> woven through regression, classification, and modern methods.</li>
+        <li><strong>Real astronomical applications</strong> — APOGEE spectra, Gaia photometry, JWST images, light curves, and more.</li>
+        <li><strong>From foundations to frontier</strong> — probability and regression through MCMC, Gaussian processes, and neural networks.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="toc" id="contents">
+    <p class="toc-h">Table of Contents</p>
+    <div id="tocBody"></div>
+  </section>
+
+  <footer>
+    <p><em>Statistical Machine Learning for Astronomy</em> by Yuan-Sen Ting (The Ohio State University). Read the full text on <a href="https://arxiv.org/abs/2506.12230" target="_blank" rel="noopener">arXiv:2506.12230</a>; tutorial notebooks and data are in the <a href="https://github.com/tingyuansen/statml" target="_blank" rel="noopener">GitHub repository</a>.</p>
+
+    <h3>How to cite</h3>
+    <details open>
+      <summary>BibTeX — textbook &amp; tutorials</summary>
+      <pre>@article{ting2025statistical,
+  title   = {Statistical Machine Learning for Astronomy},
+  author  = {Ting, Yuan-Sen},
+  journal = {arXiv preprint arXiv:2506.12230},
+  year    = {2025}
+}
+
+@software{ting2025statisticaltutorial,
+  author    = {Ting, Yuan-Sen},
+  title     = {tingyuansen/statml: Statistical Machine Learning for Astronomy — Tutorials (v1.0)},
+  year      = {2025},
+  publisher = {Zenodo},
+  version   = {v1.0},
+  doi       = {10.5281/zenodo.16495692},
+  url       = {https://doi.org/10.5281/zenodo.16495692}
+}</pre>
+    </details>
+
+    <h3>License</h3>
+    <p>© 2025 Yuan-Sen Ting. These materials may be redistributed by sharing the original GitHub repository link for educational purposes. Any other reproduction or adaptation requires explicit permission from the author.</p>
+  </footer>
+
+</div>
+
+<script src="assets/book-data.js"></script>
+<script>
+  let html = '';
+  for (const part of window.BOOK.parts) {
+    html += `<div class="part">`;
+    html += `<div class="part-head"><span class="part-num">${part.name.replace('Part ','')}</span><span class="part-title">${part.title}</span><span class="part-blurb">${part.blurb}</span></div>`;
+    for (const c of part.chapters) {
+      html += `<div class="ch-block">`;
+      html += `<a class="ch-row" href="reader.html?ch=${c.n}"><span class="cn">${String(c.chapter).padStart(2,'0')}</span><span class="ct">${c.title}</span></a>`;
+      for (const t of c.tutorials) {
+        html += `<a class="tut-row" href="reader.html?ch=${t.n}"><span class="ti">${t.short}</span><span class="tt">${t.title}</span></a>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+  document.getElementById('tocBody').innerHTML = html;
+</script>
+<script src="assets/theme.js"></script>
+</body>
+</html>

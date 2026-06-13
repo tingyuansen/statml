@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){try{var t=localStorage.getItem('stig-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<title>Reader · Statistical Machine Learning for Astronomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/atom-one-dark.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <button class="focus-btn" id="focusBtn" aria-label="Toggle full-width reading" title="Toggle full-width reading">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+  </button>
+  <button class="menu-btn" id="menuBtn" aria-label="Open contents">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    Contents
+  </button>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <p class="sb-eyebrow">An open textbook</p>
+      <h1 class="sb-title"><a href="index.html">Statistical Machine Learning for Astronomy</a></h1>
+      <p class="sb-sub">Chapters &amp; hands-on tutorials</p>
+    </div>
+    <nav class="sb-scroll" id="sbNav"></nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="reader-wrap">
+      <article class="article">
+        <div class="article-inner" id="content">
+          <div class="loading"><div class="spinner"></div><p>Loading…</p></div>
+        </div>
+      </article>
+      <div class="rail"><div class="rail-inner" id="rail"></div></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+<script src="assets/book-data.js"></script>
+<script src="assets/render.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  let n = parseInt(params.get('ch') || '1', 10);
+  if (!window.BOOK.byN[n]) n = 1;
+  const meta = window.BOOK.byN[n];
+  const app = document.getElementById('app');
+
+  /* ---- build sidebar ---- */
+  const sbNav = document.getElementById('sbNav');
+  let sbHtml = '';
+  for (const part of window.BOOK.parts) {
+    sbHtml += `<div class="sb-part">`;
+    sbHtml += `<div class="sb-part-label"><span class="pt">${part.name}</span><span>${part.title}</span></div>`;
+    for (const c of part.chapters) {
+      const active = c.n === n ? ' active' : '';
+      sbHtml += `<a class="sb-link${active}" href="reader.html?ch=${c.n}"><span class="num">${String(c.chapter).padStart(2,'0')}</span><span>${c.title}</span></a>`;
+      for (const t of c.tutorials) {
+        const ta = t.n === n ? ' active' : '';
+        sbHtml += `<a class="sb-link sub${ta}" href="reader.html?ch=${t.n}"><span class="num"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><span>${t.title}</span></a>`;
+      }
+    }
+    sbHtml += `</div>`;
+  }
+  sbNav.innerHTML = sbHtml;
+  const activeLink = sbNav.querySelector('.sb-link.active');
+  if (activeLink) activeLink.scrollIntoViewIfNeeded ? activeLink.scrollIntoViewIfNeeded() :
+    sbNav.scrollTop = Math.max(0, activeLink.offsetTop - 200);
+
+  /* ---- mobile menu + focus mode ---- */
+  document.getElementById('menuBtn').addEventListener('click', () => app.classList.add('nav-open'));
+  const focusBtn = document.getElementById('focusBtn');
+  if (localStorage.getItem('stig-focus') === '1') app.classList.add('focus');
+  focusBtn.addEventListener('click', () => {
+    app.classList.toggle('focus');
+    localStorage.setItem('stig-focus', app.classList.contains('focus') ? '1' : '0');
+  });
+  document.getElementById('scrim').addEventListener('click', () => app.classList.remove('nav-open'));
+
+  /* ---- chapter / tutorial header ---- */
+  const AUTHOR = 'Yuan-Sen Ting', AFFIL = 'The Ohio State University';
+  const REPO = 'https://github.com/tingyuansen/statml';
+
+  function headerHtml(m) {
+    if (m.type === 'tutorial') {
+      const ch = window.BOOK.flat.find(x => x.type === 'chapter' && x.chapter === m.chapter);
+      const nb = `${REPO}/blob/main/${m.slug}.ipynb`;
+      const links = [];
+      if (ch) links.push(`<a class="dl" href="reader.html?ch=${ch.n}">← Chapter ${m.chapter}</a>`);
+      links.push(`<a class="dl" href="${nb}" target="_blank" rel="noopener">Open notebook ↗</a>`);
+      return `<header class="ch-head">
+        <div class="ch-kicker"><span>Tutorial · Chapter ${m.chapter}</span></div>
+        <h1 class="ch-title">${m.title}</h1>
+        <div class="ch-byline">
+          <span class="lect">${AUTHOR}</span><span class="sep">·</span><span>${AFFIL}</span>
+          <span class="sep">·</span><span>Runnable notebook</span>
+          ${links.join('')}
+        </div>
+        <div class="ch-rule"></div>
+      </header>`;
+    }
+    const tlinks = (m.tutorials || []).map(t =>
+      `<a class="dl" href="reader.html?ch=${t.n}">${t.short} ↗</a>`).join('');
+    return `<header class="ch-head">
+      <div class="ch-kicker"><span>Chapter ${m.chapter}</span></div>
+      <h1 class="ch-title">${m.title}</h1>
+      <div class="ch-byline">
+        <span class="lect">${AUTHOR}</span><span class="sep">·</span><span>${AFFIL}</span>
+        ${tlinks ? '<span class="sep">·</span>' + tlinks : ''}
+      </div>
+      <div class="ch-rule"></div>
+    </header>`;
+  }
+
+  /* ---- footer nav ---- */
+  function navHtml(m) {
+    const flat = window.BOOK.flat;
+    const i = flat.findIndex(c => c.n === m.n);
+    const prev = i > 0 ? flat[i - 1] : null;
+    const next = (i >= 0 && i < flat.length - 1) ? flat[i + 1] : null;
+    const a = (c, dir, cls) => c
+      ? `<a class="${cls}" href="reader.html?ch=${c.n}"><span class="dir">${dir}</span><span class="nm">${c.title}</span></a>`
+      : `<a class="${cls} disabled"></a>`;
+    return `<nav class="ch-nav">${a(prev,'← Previous','prev')}${a(next,'Next →','next')}</nav>`;
+  }
+
+  /* ---- load + render ---- */
+  const content = document.getElementById('content');
+  document.title = `${meta.title} · Statistical Machine Learning for Astronomy`;
+
+  fetch(`content/${meta.slug}.json`)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(raw => {
+      const { objHtml, body } = window.BookRender.renderChapter(meta, raw);
+      content.innerHTML = headerHtml(meta) + objHtml + body + navHtml(meta);
+      const heads = window.BookRender.enhance(content);
+      if (window.renderMathInElement) {
+        window.renderMathInElement(content, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '\\(', right: '\\)', display: false },
+            { left: '$', right: '$', display: false },
+          ],
+          ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'],
+          throwOnError: false,
+        });
+      }
+      buildRail(heads);
+      if (location.hash) {
+        const el = document.getElementById(location.hash.slice(1));
+        if (el) el.scrollIntoView();
+      }
+    })
+    .catch(err => {
+      content.innerHTML = headerHtml(meta) +
+        `<div class="callout"><p class="callout-title">Could not load this page</p><p>${err.message}. Make sure the site is served over http (not opened as a file://) so the content can be fetched.</p></div>` +
+        navHtml(meta);
+    });
+
+  /* ---- on-this-page rail + scroll spy ---- */
+  function buildRail(heads) {
+    const rail = document.getElementById('rail');
+    if (!heads.length) { rail.innerHTML = ''; return; }
+    let h = '<p class="rail-title">On this page</p>';
+    for (const x of heads) {
+      h += `<a href="#${x.id}" class="${x.level === 'h3' ? 'h3' : ''}" data-id="${x.id}">${x.text}</a>`;
+    }
+    rail.innerHTML = h;
+    const links = Array.from(rail.querySelectorAll('a'));
+    rail.addEventListener('click', e => {
+      const a = e.target.closest('a'); if (!a) return;
+      e.preventDefault();
+      const el = document.getElementById(a.dataset.id);
+      if (el) { history.replaceState(null, '', '#' + a.dataset.id); el.scrollIntoView({ behavior: 'smooth' }); }
+    });
+    const map = new Map(links.map(a => [a.dataset.id, a]));
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          links.forEach(l => l.classList.remove('active'));
+          const a = map.get(en.target.id); if (a) a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '0px 0px -75% 0px', threshold: 0 });
+    heads.forEach(x => { const el = document.getElementById(x.id); if (el) spy.observe(el); });
+  }
+})();
+</script>
+<script src="assets/theme.js"></script>
+</body>
+</html>
