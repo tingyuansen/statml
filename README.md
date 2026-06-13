@@ -38,16 +38,31 @@ Browse the full, interleaved table of contents on the
 
 ---
 
+## Repository layout
+
+```
+statml/
+├── tutorials/          # 21 executed notebooks (tutorial_chapter_*.ipynb)
+├── data/               # datasets used by the tutorials (dataset_*)
+├── docs/               # the online reader (GitHub Pages site)
+│   ├── index.html      #   landing page / table of contents
+│   ├── reader.html     #   chapter + tutorial reader
+│   ├── assets/         #   styles, renderer, manifest
+│   ├── content/        #   generated chapter & tutorial JSON
+│   └── figures/        #   chapter figures (PNG)
+├── build_statml.py     # builds docs/ from the LaTeX sources + notebooks
+└── refs_supplement.bib # bibliography entries missing from the main .bib
+```
+
 ## Tutorials
 
-The 21 tutorial notebooks (`tutorial_chapter_*.ipynb`) are self-contained and
-executed, so the rendered site shows every plot. Their datasets
-(`dataset_*.npz`, `.npy`, `.csv`, `.pkl.zip`) live in the repository root, so the
-notebooks can also be run locally:
+The 21 tutorial notebooks in `tutorials/` are self-contained and executed, so the
+rendered site shows their plots. They load the datasets in `data/` via relative
+paths, so they run as-is once you have the dependencies:
 
 ```bash
-pip install numpy scipy matplotlib jupyterlab torch   # torch only for Chapter 15
-jupyter lab
+pip install numpy scipy matplotlib pandas jupyterlab torch   # torch only for Chapter 15
+cd tutorials && jupyter lab
 ```
 
 ---

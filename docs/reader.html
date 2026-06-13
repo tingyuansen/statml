@@ -97,7 +97,7 @@
   function headerHtml(m) {
     if (m.type === 'tutorial') {
       const ch = window.BOOK.flat.find(x => x.type === 'chapter' && x.chapter === m.chapter);
-      const nb = `${REPO}/blob/main/${m.slug}.ipynb`;
+      const nb = `${REPO}/blob/main/tutorials/${m.slug}.ipynb`;
       const links = [];
       if (ch) links.push(`<a class="dl" href="reader.html?ch=${ch.n}">← Chapter ${m.chapter}</a>`);
       links.push(`<a class="dl" href="${nb}" target="_blank" rel="noopener">Open notebook ↗</a>`);

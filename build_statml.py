@@ -279,7 +279,7 @@ def _clean_intro(md: str) -> tuple[str, str | None]:
 
 
 def convert_tutorial(key: str) -> tuple[dict, str | None]:
-    nb = json.loads((ROOT / f"tutorial_chapter_{key}.ipynb").read_text(encoding="utf-8"))
+    nb = json.loads((ROOT / "tutorials" / f"tutorial_chapter_{key}.ipynb").read_text(encoding="utf-8"))
     cells = []
     title = None
     first_md = True
