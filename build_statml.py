@@ -21,6 +21,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from bs4 import BeautifulSoup
+
 ROOT = Path(__file__).parent.resolve()
 DOCS = ROOT / "docs"
 CONTENT = DOCS / "content"
@@ -76,18 +78,49 @@ def convert_figures() -> None:
 
 
 # ---------------------------------------------------------------- chapters ----
-_FIG_RE = re.compile(r'<embed src="(Chapter_\d+_Fig\d+)\.pdf"([^>]*)/?>')
+_FIG_RE = re.compile(r'<embed\s+src="(Chapter_\d+_Fig\d+)\.pdf"([^>]*?)\s*/?\s*>')
 
 
 def _fix_figures(html: str) -> str:
     def sub(m: re.Match) -> str:
-        name, rest = m.group(1), m.group(2)
+        name, rest = m.group(1), m.group(2).strip()
+        rest = (" " + rest) if rest else ""
         return f'<img src="figures/{name}.png"{rest} alt="{name}" loading="lazy">'
     return _FIG_RE.sub(sub, html)
 
 
+def _number_figures(html: str, chapter: int) -> str:
+    """Number figures N.1, N.2, ... within the chapter: label captions and
+    rewrite cross-reference links to the same numbers."""
+    soup = BeautifulSoup(html, "html.parser")
+    id_to_num: dict[str, str] = {}
+    for i, fig in enumerate(soup.find_all("figure"), 1):
+        num = f"{chapter}.{i}"
+        fid = fig.get("id")
+        if fid:
+            id_to_num[fid] = num
+        cap = fig.find("figcaption")
+        if cap is not None:
+            strong = soup.new_tag("strong")
+            strong.string = f"Figure {num}. "
+            cap.insert(0, strong)
+    for a in soup.find_all("a", attrs={"data-reference-type": "ref"}):
+        num = id_to_num.get(a.get("data-reference", ""))
+        if num:
+            a.string = num
+    return str(soup)
+
+
 def _strip_first_h1(html: str) -> str:
     return re.sub(r"<h1\b[^>]*>.*?</h1>\s*", "", html, count=1, flags=re.DOTALL)
+
+
+# Small text fixes for gaps in the source LaTeX (not edited there since the
+# sources are private). Keyed by chapter number.
+CHAPTER_FIXES: dict[int, list[tuple[str, str]]] = {
+    10: [("shown in Figure to solidify our understanding",
+          "shown in the figure below to solidify our understanding")],
+}
 
 
 def _fix_math(html: str) -> str:
@@ -115,8 +148,11 @@ def convert_chapter(num: int) -> str:
     if res.returncode != 0:
         print(f"  !! pandoc failed on Chapter{num}: {res.stderr[:200]}")
     html = res.stdout
+    for old, new in CHAPTER_FIXES.get(num, []):
+        html = html.replace(old, new)
     html = _fix_figures(html)
     html = _fix_math(html)
+    html = _number_figures(html, num)
     html = _strip_first_h1(html)
     return html.strip()
 
@@ -156,20 +192,22 @@ def _slim_outputs(outputs: list) -> list:
     return merged
 
 
-_META_LINE = re.compile(
-    r"^\s*\*\s*(Tutorial by|Companion material|If you find|This tutorial)[^\n]*\*\s*$",
-    re.MULTILINE | re.IGNORECASE,
-)
-
-
 def _clean_intro(md: str) -> tuple[str, str | None]:
-    """Pull the descriptive title from the first H1 and drop boilerplate meta lines."""
+    """Pull the descriptive title from the first H1 and drop the boilerplate
+    preamble (author line, companion note, citation link, copyright) — every
+    tutorial opens with a run of italic-only lines before its Introduction."""
     m = re.match(r"\s*#\s+(.+)", md)
     title = m.group(1).lstrip("# ").strip() if m else None
     md = re.sub(r"^\s*#\s+.+\n", "", md, count=1)
-    md = _META_LINE.sub("", md)
-    md = re.sub(r"\n{3,}", "\n\n", md)
-    return md.strip(), title
+    lines = md.split("\n")
+    i = 0
+    while i < len(lines):
+        s = lines[i].strip()
+        if s == "" or (s.startswith("*") and s.endswith("*") and len(s) > 2):
+            i += 1
+        else:
+            break
+    return "\n".join(lines[i:]).strip(), title
 
 
 def convert_tutorial(key: str) -> tuple[dict, str | None]:
