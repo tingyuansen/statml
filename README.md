@@ -2,7 +2,7 @@
 
 > A consistently Bayesian, first-principles treatment of machine learning for astronomy — deriving each method from the ground up, with uncertainty quantification and statistical rigor at its core. For final-year undergraduates and graduate students, each chapter paired with a hands-on tutorial on real astronomical data.
 
-**📖 Read online:** **[tingyuansen.github.io/statml](https://tingyuansen.github.io/statml/)**
+**📖 Read online:** **[statml.org](https://statml.org/)** (mirror: [tingyuansen.github.io/statml](https://tingyuansen.github.io/statml/))
 &nbsp;·&nbsp; **📄 Full text on arXiv:** [arXiv:2506.12230](https://arxiv.org/abs/2506.12230)
 
 The online reader places each textbook chapter next to its companion tutorial(s), so
@@ -34,7 +34,7 @@ APOGEE spectra, Gaia photometry, JWST images, Kepler light curves, and more.
 - **Modern methods** — Gaussian processes and neural networks
 
 Browse the full, interleaved table of contents on the
-[online reader](https://tingyuansen.github.io/statml/).
+[online reader](https://statml.org/).
 
 ---
 
@@ -44,7 +44,7 @@ Browse the full, interleaved table of contents on the
 statml/
 ├── tutorials/          # 22 executed notebooks (tutorial_chapter_*.ipynb)
 ├── data/               # datasets used by the tutorials (dataset_*)
-├── docs/               # the online reader (GitHub Pages site)
+├── docs/               # the online reader (served at statml.org and on GitHub Pages)
 │   ├── index.html      #   landing page / table of contents
 │   ├── reader.html     #   chapter + tutorial reader
 │   ├── assets/         #   styles, renderer, manifest
@@ -74,7 +74,11 @@ SDSS DR17, with the classes of Hughes et al. (2022).
 
 ## Building the site
 
-The reader is a static site under `docs/`, rebuilt by `build_statml.py`:
+The reader is a static site under `docs/`. Every push to `main` publishes it twice:
+a Vercel project serves `docs/` at statml.org, and GitHub Pages serves the same folder
+at tingyuansen.github.io/statml, the address printed in the book. Neither redirects to
+the other, so each stays reachable if a network blocks the other. `docs/` is rebuilt by
+`build_statml.py`:
 
 - **Chapters** are converted from the LaTeX sources with `pandoc`, with math kept raw
   for KaTeX. Section, figure and table numbers and the cross-references come from a
