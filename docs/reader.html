@@ -160,10 +160,21 @@
         });
       }
       buildRail(heads);
-      if (location.hash) {
-        const el = document.getElementById(location.hash.slice(1));
-        if (el) el.scrollIntoView();
-      }
+      const toHash = () => {
+        const el = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (el) el.scrollIntoView({ behavior: 'instant' });   // a jump, as a browser lands on #label
+      };
+      toHash();
+      // a display only slightly too wide (it fits the printed page) is scaled
+      // to fit, rather than shown with a scrollbar; then land on #label again,
+      // now that the fonts have set the final layout
+      document.fonts.ready.then(() => {
+        content.querySelectorAll('.katex-display').forEach(d => {
+          const r = d.clientWidth / d.scrollWidth;
+          if (r < 1 && r > 0.85) d.style.fontSize = Math.floor(r * 100) + '%';
+        });
+        toHash();
+      });
     })
     .catch(err => {
       content.innerHTML = headerHtml(meta) +
@@ -177,7 +188,8 @@
     if (!heads.length) { rail.innerHTML = ''; return; }
     let h = '<p class="rail-title">On this page</p>';
     for (const x of heads) {
-      h += `<a href="#${x.id}" class="${x.level === 'h3' ? 'h3' : ''}" data-id="${x.id}">${x.text}</a>`;
+      const el = document.getElementById(x.id);   // typeset by now, so its math shows as math
+      h += `<a href="#${x.id}" class="${x.level === 'h3' ? 'h3' : ''}" data-id="${x.id}">${el ? el.innerHTML : x.text}</a>`;
     }
     rail.innerHTML = h;
     const links = Array.from(rail.querySelectorAll('a'));

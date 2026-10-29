@@ -42,7 +42,7 @@ Browse the full, interleaved table of contents on the
 
 ```
 statml/
-├── tutorials/          # 21 executed notebooks (tutorial_chapter_*.ipynb)
+├── tutorials/          # 22 executed notebooks (tutorial_chapter_*.ipynb)
 ├── data/               # datasets used by the tutorials (dataset_*)
 ├── docs/               # the online reader (GitHub Pages site)
 │   ├── index.html      #   landing page / table of contents
@@ -50,20 +50,25 @@ statml/
 │   ├── assets/         #   styles, renderer, manifest
 │   ├── content/        #   generated chapter & tutorial JSON
 │   └── figures/        #   chapter figures (PNG)
-├── build_statml.py     # builds docs/ from the LaTeX sources + notebooks
-└── refs_supplement.bib # bibliography entries missing from the main .bib
+└── build_statml.py     # builds docs/ from the LaTeX sources + notebooks
 ```
 
 ## Tutorials
 
-The 21 tutorial notebooks in `tutorials/` are self-contained and executed, so the
+The 22 tutorial notebooks in `tutorials/` are self-contained and executed, so the
 rendered site shows their plots. They load the datasets in `data/` via relative
 paths, so they run as-is once you have the dependencies:
 
 ```bash
-pip install numpy scipy matplotlib pandas jupyterlab torch   # torch only for Chapter 15
+pip install numpy scipy matplotlib pandas scikit-learn jupyterlab torch   # torch for Tutorial 8 and Chapter 15
+pip install sentence-transformers umap-learn pillow                      # Tutorial 8 only
 cd tutorials && jupyter lab
 ```
+
+Most tutorials need only NumPy and Matplotlib. SciPy is used in Tutorials 12, 13b and 14a,
+pandas in 8 and 11a, scikit-learn in 7, 8 and 9, and PyTorch in 8 and 15a to 15d.
+The star-galaxy sample of Tutorial 14b holds 600 Gaia DR3 sources with labels from
+SDSS DR17, with the classes of Hughes et al. (2022).
 
 ---
 
@@ -71,10 +76,13 @@ cd tutorials && jupyter lab
 
 The reader is a static site under `docs/`, rebuilt by `build_statml.py`:
 
-- **Chapters** are converted from the LaTeX sources with `pandoc` (math kept raw for
-  KaTeX, citations resolved via `citeproc`); figures are converted from PDF to PNG.
-  The LaTeX sources are kept privately and are not part of this repository, so a full
-  chapter rebuild requires them — the rendered output in `docs/content/` is committed.
+- **Chapters** are converted from the LaTeX sources with `pandoc`, with math kept raw
+  for KaTeX. Section, figure and table numbers and the cross-references come from a
+  draft LaTeX run, so they match the printed book, and each chapter ends with the
+  works of the book's bibliography that its Further Reading names. Figures are
+  converted from PDF to PNG. The LaTeX sources are kept privately and are not part
+  of this repository, so a full chapter rebuild requires them — the rendered output
+  in `docs/content/` is committed.
 - **Tutorials** are slimmed from the executed notebooks into `docs/content/*.json`.
 
 ```bash
@@ -82,7 +90,8 @@ python3 build_statml.py            # rebuild chapters, tutorials, and the manife
 python3 build_statml.py --figures  # also re-convert figures (slower)
 ```
 
-Dependencies: `pandoc`, `poppler` (`pdftoppm`), and Python 3. To preview locally,
+Dependencies: `pandoc`, `pdflatex`, `poppler` (`pdftoppm`), and Python 3 with
+`beautifulsoup4`. To preview locally,
 serve `docs/` over HTTP:
 
 ```bash

@@ -5,8 +5,10 @@ Renders, into docs/, a client-side reader (see docs/reader.html) that shows each
 textbook chapter alongside its hands-on tutorial(s):
 
   * chapters  — LaTeX (kept privately in SOURCE) -> HTML via pandoc; math stays
-                raw for KaTeX, citations resolved via citeproc, figures converted
-                from PDF to PNG.
+                raw for KaTeX. Section, figure and table numbers and every
+                cross-reference come from a draft LaTeX run, so they match the
+                printed book. Each Further Reading is followed by its entries of
+                the book's bibliography. Figures are converted from PDF to PNG.
   * tutorials — executed Jupyter notebooks -> slim JSON (markdown + code + outputs)
                 so every plot shows in the rendered page.
 
@@ -17,8 +19,11 @@ from __future__ import annotations
 
 import json
 import re
+import struct
 import subprocess
 import sys
+import tempfile
+import unicodedata
 from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString
@@ -33,7 +38,7 @@ AUTHOR = "Yuan-Sen Ting"
 AFFIL = "The Ohio State University"
 
 # Chapter number -> (title, [tutorial keys]). Tutorial files are
-# tutorial_chapter_<key>.ipynb in the repo root.
+# tutorials/tutorial_chapter_<key>.ipynb.
 CHAPTERS = {
     1:  ("Preface and Overview", []),
     2:  ("Bayesian Inference", ["2a", "2b"]),
@@ -47,7 +52,7 @@ CHAPTERS = {
     10: ("Principal Component Analysis", ["10"]),
     11: ("K-means and Gaussian Mixture Models", ["11a", "11b"]),
     12: ("Sampling and Monte Carlo Methods", ["12"]),
-    13: ("Markov Chain Monte Carlo", ["13"]),
+    13: ("Markov Chain Monte Carlo", ["13a", "13b"]),
     14: ("Gaussian Processes", ["14a", "14b"]),
     15: ("Neural Networks", ["15a", "15b", "15c", "15d"]),
     16: ("Afterword: A Personal Note", []),
@@ -64,6 +69,18 @@ PARTS = [
 ]
 
 
+def reading_order() -> dict[int, int]:
+    """Chapter number -> its page n in the reader (each chapter is followed by
+    its tutorials, as in build_book_data)."""
+    n, pages = 0, {}
+    for *_, chap_nums in PARTS:
+        for cn in chap_nums:
+            n += 1
+            pages[cn] = n
+            n += len(CHAPTERS[cn][1])
+    return pages
+
+
 # ----------------------------------------------------------------- figures ----
 def convert_figures() -> None:
     FIGURES.mkdir(parents=True, exist_ok=True)
@@ -71,10 +88,91 @@ def convert_figures() -> None:
     for pdf in pdfs:
         out = FIGURES / pdf.stem
         subprocess.run(
-            ["pdftoppm", "-png", "-r", "200", "-singlefile", str(pdf), str(out)],
+            ["pdftoppm", "-png", "-r", "300", "-singlefile", str(pdf), str(out)],
             check=False, capture_output=True,
         )
-    print(f"  figures: {len(pdfs)} converted")
+    stale = [p for p in FIGURES.glob("*.png") if not (SOURCE / f"{p.stem}.pdf").exists()]
+    for p in stale:
+        p.unlink()
+    print(f"  figures: {len(pdfs)} converted, {len(stale)} stale removed")
+
+
+# ------------------------------------------------------------------ labels ----
+def book_labels() -> dict[str, tuple[int, str]]:
+    """Every \\label of the book -> (chapter, printed number), read from the .aux
+    files of one draft LaTeX run (written to a temporary folder, so SOURCE stays
+    clean)."""
+    labels: dict[str, tuple[int, str]] = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        res = subprocess.run(
+            ["pdflatex", "-interaction=batchmode", "-draftmode",
+             f"-output-directory={tmp}", "Textbook.tex"],
+            cwd=str(SOURCE), capture_output=True,
+        )
+        if res.returncode != 0:
+            print("  !! LaTeX reported errors; check the book builds (RUNBOOK, section 3)")
+        for num in CHAPTERS:
+            aux = Path(tmp) / f"Chapter{num}.aux"
+            if not aux.exists():
+                sys.exit(f"!! LaTeX run gave no {aux.name}; is pdflatex installed?")
+            text = aux.read_text(encoding="utf-8", errors="replace")
+            for key, val in re.findall(r"\\newlabel\{([^}]+)\}\{\{([^}]*)\}", text):
+                labels[key] = (num, val)
+    print(f"  labels: {len(labels)} read from LaTeX")
+    return labels
+
+
+# ------------------------------------------------------------ bibliography ----
+def _fold(s: str) -> str:
+    """LaTeX or Unicode text -> lower-case ASCII, for matching author names."""
+    s = re.sub(r"\\natexlab\{(\w)\}", r"\1", s)
+    s = re.sub(r"\\[`'^\"~=.cvuHk]\s*\{?(\w)\}?", r"\1", s)   # \"u, \c{c}, \~n
+    s = s.replace("~", " ").replace("\\ ", " ")
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+    s = re.sub(r"[{}]", "", s)
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def book_bibliography() -> tuple[dict[str, tuple[str, str]], dict[str, str]]:
+    """The printed bibliography (Textbook_refs.tex, in its order): key -> the
+    citation as the text writes it, (author, year), and key -> HTML entry."""
+    tex = (SOURCE / "Textbook_refs.tex").read_text(encoding="utf-8")
+    tex = tex.split(r"\end{thebibliography}")[0]
+    parts = re.split(r"\\bibitem\[((?:[^\[\]{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\]\{([^}]+)\}", tex)
+    cites: dict[str, tuple[str, str]] = {}
+    src = []
+    for label, key, body in zip(parts[1::3], parts[2::3], parts[3::3]):
+        m = re.match(r"(.*?)\((\d{4}(?:\{\\natexlab\{\w\}\})?)\)", label)
+        cites[key] = (_fold(m.group(1)), _fold(m.group(2)))
+        body = re.sub(r"\{\\natexlab\{(\w)\}\}", r"\1", body)
+        body = re.sub(r"\\penalty0\s*", "", body.replace(r"\newblock", " "))   # '5(2):53', as printed
+        src.append(f"BIBKEY{key}BIBKEY\n\n{body.strip()}\n")
+    res = subprocess.run(["pandoc", "-f", "latex", "-t", "html5"],
+                         input="\n".join(src), capture_output=True, text=True)
+    chunks = re.split(r"<p>BIBKEY(.+?)BIBKEY</p>", res.stdout)
+    entries = {k: re.sub(r"^\s*<p>|</p>\s*$", "", h.strip())
+               for k, h in zip(chunks[1::2], chunks[2::2])}
+    print(f"  bibliography: {len(entries)} entries")
+    return cites, entries
+
+
+def chapter_references(num: int, cites: dict, entries: dict) -> str:
+    """The works the chapter's Further Reading names, as a References list."""
+    tex = (SOURCE / f"Chapter{num}.tex").read_text(encoding="utf-8")
+    m = re.search(r"\\paragraph\{Further Reading\}(.*?)(?=\\paragraph\{|\\section|\Z)", tex, re.S)
+    if not m:
+        return ""
+    text = _fold(m.group(1))
+    found = []
+    for key, (who, year) in cites.items():
+        pat = r"(?<![\w-])" + re.escape(who) + r" \((?:\d{4}\w?, )*" + re.escape(year) + r"[,)]"
+        found += [(f.start(), f.end(), key) for f in re.finditer(pat, text)]
+    # 'Skilling (2006)' inside 'Sivia and Skilling (2006)' is not a citation
+    cited = {k for s, e, k in found if not any(s2 < s and e2 >= e for s2, e2, _ in found)}
+    items = "\n".join(f'<div class="csl-entry" id="ref-{k}" role="listitem">{entries[k]}</div>'
+                      for k in cites if k in cited)
+    return ('<h2>References</h2>\n<div class="references csl-bib-body hanging-indent" role="list">\n'
+            f"{items}\n</div>")
 
 
 # ---------------------------------------------------------------- chapters ----
@@ -82,32 +180,74 @@ _FIG_RE = re.compile(r'<embed\s+src="(Chapter_\d+_Fig\d+)\.pdf"([^>]*?)\s*/?\s*>
 
 
 def _fix_figures(html: str) -> str:
+    """PDF embeds -> PNG images. The PNG's pixel size goes in width/height so the
+    browser reserves each figure's space before it loads, and a link to a label
+    lands on its target."""
     def sub(m: re.Match) -> str:
         name, rest = m.group(1), m.group(2).strip()
         rest = (" " + rest) if rest else ""
-        return f'<img src="figures/{name}.png"{rest} alt="{name}" loading="lazy">'
+        png = FIGURES / f"{name}.png"
+        if png.exists():
+            with png.open("rb") as f:
+                w, h = struct.unpack(">II", f.read(24)[16:24])
+            rest += f' width="{w}" height="{h}"'
+        return f'<img src="figures/{name}.png"{rest} loading="lazy">'
     return _FIG_RE.sub(sub, html)
 
 
-def _number_figures(html: str, chapter: int) -> str:
-    """Number figures N.1, N.2, ... within the chapter: label captions and
-    rewrite cross-reference links to the same numbers."""
+def _number_floats(html: str, chapter: int, labels: dict) -> str:
+    """Label figure and table captions with the book's numbers ('Figure 2.3.'),
+    which are also the alt text of the figure images."""
     soup = BeautifulSoup(html, "html.parser")
-    id_to_num: dict[str, str] = {}
-    for i, fig in enumerate(soup.find_all("figure"), 1):
-        num = f"{chapter}.{i}"
-        fid = fig.get("id")
-        if fid:
-            id_to_num[fid] = num
-        cap = fig.find("figcaption")
-        if cap is not None:
-            strong = soup.new_tag("strong")
-            strong.string = f"Figure {num}. "
-            cap.insert(0, strong)
-    for a in soup.find_all("a", attrs={"data-reference-type": "ref"}):
-        num = id_to_num.get(a.get("data-reference", ""))
-        if num:
-            a.string = num
+    for kind, tag, cap_tag in (("Figure", "figure", "figcaption"), ("Table", "table", "caption")):
+        for i, el in enumerate(soup.find_all(tag), 1):
+            fid = el.get("id") or (el.parent.get("id") if el.parent else None)
+            num = labels.get(fid, (chapter, f"{chapter}.{i}"))[1]
+            for img in el.find_all("img"):
+                img["alt"] = f"{kind} {num}"
+            cap = el.find(cap_tag)
+            if cap is not None:
+                strong = soup.new_tag("strong")
+                strong.string = f"{kind} {num}. "
+                cap.insert(0, strong)
+    return str(soup)
+
+
+def _number_sections(html: str, chapter: int, labels: dict) -> str:
+    """Prefix \\section (h2) and \\subsection (h3) headings with the book's
+    numbers N.k and N.k.j, which the text cites ('Section 2.5.1'). Run before
+    _normalize_headings; labelled headings are checked against LaTeX."""
+    soup = BeautifulSoup(html, "html.parser")
+    sec = sub = 0
+    for h in soup.find_all(["h2", "h3"]):
+        if h.name == "h2":
+            sec, sub = sec + 1, 0
+            num = f"{chapter}.{sec}"
+        else:
+            sub += 1
+            num = f"{chapter}.{sec}.{sub}"
+        want = labels.get(h.get("id", ""), (chapter, num))[1]
+        if want != num:
+            print(f"  !! Chapter {chapter}: heading {h.get('id')} is {num} here, {want} in the book")
+        span = soup.new_tag("span", attrs={"class": "secnum"})
+        span.string = num
+        h.insert(0, " ")
+        h.insert(0, span)
+    return str(soup)
+
+
+def _resolve_refs(html: str, chapter: int, labels: dict, pages: dict) -> str:
+    """Give each \\ref its printed number and link it to its target, in this
+    chapter (#label) or in another (reader.html?ch=N#label)."""
+    soup = BeautifulSoup(html, "html.parser")
+    for a in soup.find_all("a", attrs={"data-reference-type": True}):
+        key = a.get("data-reference", "")
+        if key not in labels:
+            print(f"  !! Chapter {chapter}: unresolved reference {key}")
+            continue
+        ch, num = labels[key]
+        a.string = f"({num})" if a["data-reference-type"] == "eqref" else num
+        a["href"] = f"#{key}" if ch == chapter else f"reader.html?ch={pages[ch]}#{key}"
     return str(soup)
 
 
@@ -135,8 +275,9 @@ def _normalize_headings(html: str) -> str:
       * directly under a \\section            -> h3 (a subsection)
       * nested under a real \\subsection      -> h4 (kept below it)
       * in the Preface (no \\section at all)  -> h2 (top-level sections)
-    "Further Readings" becomes its own section (h2), and trailing colons left
-    over from run-in \\paragraph titles are dropped."""
+    "Further Reading" becomes its own section (h2), and trailing colons left
+    over from run-in \\paragraph titles and line breaks set for the printed
+    title (\\\\) are dropped."""
     soup = BeautifulSoup(html, "html.parser")
     heads = soup.find_all(re.compile(r"^h[1-6]$"))
     has_section = any(h.name == "h2" for h in heads)   # h2 == \section
@@ -156,72 +297,79 @@ def _normalize_headings(html: str) -> str:
                 h.name = "h3"
         elif h.name == "h6":          # \subparagraph (rare)
             h.name = "h4" if has_section else "h3"
+        for br in h.find_all("br"):
+            br.replace_with(" ")
         _strip_trailing_colon(h)
     return str(soup)
 
 
-# Small text fixes for gaps in the source LaTeX (not edited there since the
-# sources are private). Keyed by chapter number.
-CHAPTER_FIXES: dict[int, list[tuple[str, str]]] = {
-    10: [("shown in Figure to solidify our understanding",
-          "shown in the figure below to solidify our understanding")],
+_MATH_RE = re.compile(r'<span\s+class="math (display|inline)">(.*?)</span>', re.DOTALL)
+
+# Pandoc wraps amsmath environments inside \[ … \]. KaTeX auto-numbers
+# equation/align/gather, which (a) draws an equation tag that forces a
+# full-width layout (showing a stray rule/scrollbar under the equation) and
+# (b) uses its own running counter that does not match the book. We don't
+# number equations on the web, so unwrap/convert everything to the plain,
+# un-numbered variants. eqnarray and split are unsupported by KaTeX outright.
+_MATH_ENVS = {
+    r"\begin{equation*}": "", r"\end{equation*}": "",
+    r"\begin{equation}": "",  r"\end{equation}": "",
+    r"\begin{align*}": r"\begin{aligned}",   r"\end{align*}": r"\end{aligned}",
+    r"\begin{align}": r"\begin{aligned}",     r"\end{align}": r"\end{aligned}",
+    r"\begin{eqnarray*}": r"\begin{aligned}", r"\end{eqnarray*}": r"\end{aligned}",
+    r"\begin{eqnarray}": r"\begin{aligned}",  r"\end{eqnarray}": r"\end{aligned}",
+    r"\begin{gather*}": r"\begin{gathered}",  r"\end{gather*}": r"\end{gathered}",
+    r"\begin{gather}": r"\begin{gathered}",   r"\end{gather}": r"\end{gathered}",
+    r"\begin{split}": r"\begin{aligned}",     r"\end{split}": r"\end{aligned}",
 }
 
 
-def _fix_math(html: str) -> str:
-    """Normalize display-math environments to KaTeX's non-numbered forms.
+def _fix_math(html: str, labels: dict) -> str:
+    """Normalize math to what KaTeX renders, un-numbered as above.
 
-    Pandoc wraps amsmath environments inside \\[ … \\]. KaTeX auto-numbers
-    equation/align/gather, which (a) draws an equation tag that forces a
-    full-width layout (showing a stray rule/scrollbar under the equation) and
-    (b) uses its own running counter that does not match the book. We don't
-    number equations on the web, so unwrap/convert everything to the plain,
-    un-numbered variants. eqnarray and split are unsupported by KaTeX outright."""
-    repl = {
-        r"\begin{equation*}": "", r"\end{equation*}": "",
-        r"\begin{equation}": "",  r"\end{equation}": "",
-        r"\begin{align*}": r"\begin{aligned}",   r"\end{align*}": r"\end{aligned}",
-        r"\begin{align}": r"\begin{aligned}",     r"\end{align}": r"\end{aligned}",
-        r"\begin{eqnarray*}": r"\begin{aligned}", r"\end{eqnarray*}": r"\end{aligned}",
-        r"\begin{eqnarray}": r"\begin{aligned}",  r"\end{eqnarray}": r"\end{aligned}",
-        r"\begin{gather*}": r"\begin{gathered}",  r"\end{gather*}": r"\end{gathered}",
-        r"\begin{gather}": r"\begin{gathered}",   r"\end{gather}": r"\end{gathered}",
-        r"\begin{split}": r"\begin{aligned}",     r"\end{split}": r"\end{aligned}",
-    }
-    for a, b in repl.items():
-        html = html.replace(a, b)
-    html = re.sub(r"&\s*=\s*&", r"&=", html)        # eqnarray centred &=&
-    html = re.sub(r"\\label\{[^}]*\}", "", html)    # KaTeX errors on \label
-    return html
-
-
-def _add_references_heading(html: str) -> str:
-    """citeproc emits the bibliography as a bare div; give it a heading."""
-    return html.replace(
-        '<div class="references', '<h2>References</h2>\n<div class="references', 1
-    )
+    The book's print-layout commands go too: KaTeX draws the * of \\\\* (a row
+    break that forbids a page break) and does not know \\mbox. The exception
+    to un-numbered math is the few labelled equations that the text cites by
+    number ('Equation 14.1'): they keep the book's number as a \\tag, with
+    align* instead of aligned so that a tag can sit on its own row."""
+    def sub(m: re.Match) -> str:
+        kind, tex = m.group(1), m.group(2)
+        tex = tex.replace("\\\\*", "\\\\").replace(r"\mbox{", r"\text{")
+        keys = [k for k in re.findall(r"\\label\{([^}]*)\}", tex) if k in labels]
+        envs = dict(_MATH_ENVS)
+        if keys:
+            envs[r"\begin{align}"], envs[r"\end{align}"] = r"\begin{align*}", r"\end{align*}"
+        for a, b in envs.items():
+            tex = tex.replace(a, b)
+        for k in keys:
+            tex = tex.replace(f"\\label{{{k}}}", f"\\tag{{{labels[k][1]}}}")
+        tex = re.sub(r"\\label\{[^}]*\}", "", tex)    # KaTeX errors on \label
+        anchors = "".join(f'<span id="{k}"></span>' for k in keys[1:])
+        anchor = f' id="{keys[0]}"' if keys else ""
+        return f'{anchors}<span class="math {kind}"{anchor}>{tex}</span>'
+    return _MATH_RE.sub(sub, html)
 
 
-def convert_chapter(num: int) -> str:
-    tex = SOURCE / f"Chapter{num}.tex"
+def convert_chapter(num: int, labels: dict, pages: dict, cites: dict, entries: dict) -> str:
+    tex = (SOURCE / f"Chapter{num}.tex").read_text(encoding="utf-8")
+    # {\sloppy ... \par} only loosens line breaking in print; pandoc would turn
+    # its \par into a paragraph break (splitting a run-in list item)
+    tex = re.sub(r"\{\\sloppy\s+(.*?)\\par\}", r"\1", tex, flags=re.DOTALL)
     res = subprocess.run(
-        ["pandoc", str(tex), "-f", "latex", "-t", "html5",
-         "--mathjax", "--citeproc",
-         "--bibliography", "Textbook.bib",
-         "--bibliography", str(ROOT / "refs_supplement.bib")],
-        cwd=str(SOURCE), capture_output=True, text=True,
+        ["pandoc", "-f", "latex", "-t", "html5", "--mathjax"],
+        input=tex, cwd=str(SOURCE), capture_output=True, text=True,
     )
     if res.returncode != 0:
-        print(f"  !! pandoc failed on Chapter{num}: {res.stderr[:200]}")
+        sys.exit(f"!! pandoc failed on Chapter{num}: {res.stderr[:300]}")
     html = res.stdout
-    for old, new in CHAPTER_FIXES.get(num, []):
-        html = html.replace(old, new)
     html = _fix_figures(html)
-    html = _fix_math(html)
-    html = _number_figures(html, num)
+    html = _fix_math(html, labels)
+    html = _number_floats(html, num, labels)
+    html = _resolve_refs(html, num, labels, pages)
     html = _strip_first_h1(html)
+    html = _number_sections(html, num, labels)
     html = _normalize_headings(html)
-    html = _add_references_heading(html)
+    html = html.strip() + "\n" + chapter_references(num, cites, entries)
     return html.strip()
 
 
@@ -355,10 +503,13 @@ def main() -> None:
     CONTENT.mkdir(parents=True, exist_ok=True)
     if "--figures" in sys.argv:
         convert_figures()
+    labels = book_labels()
+    cites, entries = book_bibliography()
+    pages = reading_order()
 
     tut_titles: dict[str, str] = {}
     for num, (title, tut_keys) in CHAPTERS.items():
-        html = convert_chapter(num)
+        html = convert_chapter(num, labels, pages, cites, entries)
         (CONTENT / f"chapter{num:02d}.json").write_text(
             json.dumps({"cells": [{"cell_type": "markdown_html", "html": html}]}, ensure_ascii=False),
             encoding="utf-8")
@@ -371,6 +522,12 @@ def main() -> None:
         kb = (CONTENT / f"chapter{num:02d}.json").stat().st_size // 1024
         print(f"  Chapter {num:>2}: {title[:38]:38} ({kb} KB, {len(tut_keys)} tut: "
               + ", ".join(tut_titles.get(k, k)[:18] for k in tut_keys) + ")")
+
+    expected = {"chapter%02d.json" % n for n in CHAPTERS} | {
+        f"tutorial_chapter_{k}.json" for _, keys in CHAPTERS.values() for k in keys}
+    for stale in sorted(p for p in CONTENT.glob("*.json") if p.name not in expected):
+        stale.unlink()
+        print(f"  removed stale {stale.name}")
 
     (DOCS / "assets" / "book-data.js").write_text(build_book_data(tut_titles), encoding="utf-8")
     print("Wrote chapters, tutorials, and book-data.js")

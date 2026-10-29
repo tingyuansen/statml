@@ -203,6 +203,10 @@ a:hover{ color: var(--accent-deep); }
 .katex{ font-size:1.04em; }
 .katex-display{ margin:1.5rem 0; overflow-x:auto; overflow-y:hidden; padding:.4rem 0; }
 .katex-display::-webkit-scrollbar{ height:6px; }
+/* a #label link (equation, figure) lands with the same room above as a heading */
+.prose [id]{ scroll-margin-top:1.5rem; }
+/* an equation tag ends in a 2px KaTeX strut; keep it inside so no scrollbar shows */
+.katex-display > .katex > .katex-html > .tag{ right:2px; }
 
 /* ============ Notebook code cells ============ */
 .nb-cell{ margin: 1.7rem 0; }

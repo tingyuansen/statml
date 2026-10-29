@@ -32,7 +32,7 @@ window.BOOK = {
               "chapter": 2,
               "type": "tutorial",
               "slug": "tutorial_chapter_2a",
-              "title": "Probability Distributions and Cluster Detection",
+              "title": "Poisson Statistics for Cluster Detection",
               "short": "Tutorial 2a",
               "parent": "Bayesian Inference"
             },
@@ -61,7 +61,7 @@ window.BOOK = {
               "chapter": 3,
               "type": "tutorial",
               "slug": "tutorial_chapter_3",
-              "title": "Baryon Acoustic Oscillation Detection",
+              "title": "Two-Point Statistics for Baryon Acoustic Oscillations",
               "short": "Tutorial 3",
               "parent": "Statistical Foundations and Summary Statistics"
             }
@@ -88,7 +88,7 @@ window.BOOK = {
               "chapter": 4,
               "type": "tutorial",
               "slug": "tutorial_chapter_4a",
-              "title": "Linear Regression with Stellar Spectra",
+              "title": "Linear Regression for Stellar Spectra",
               "short": "Tutorial 4a",
               "parent": "Linear Regression"
             },
@@ -97,7 +97,7 @@ window.BOOK = {
               "chapter": 4,
               "type": "tutorial",
               "slug": "tutorial_chapter_4b",
-              "title": "Calibrating Astronomical Observations",
+              "title": "Linear Regression for Telescope Calibration",
               "short": "Tutorial 4b",
               "parent": "Linear Regression"
             }
@@ -117,7 +117,7 @@ window.BOOK = {
               "chapter": 5,
               "type": "tutorial",
               "slug": "tutorial_chapter_5",
-              "title": "Bayesian Linear Regression with Stellar Spectra",
+              "title": "Bayesian Linear Regression for Stellar Spectra",
               "short": "Tutorial 5",
               "parent": "Bayesian Linear Regression"
             }
@@ -137,7 +137,7 @@ window.BOOK = {
               "chapter": 6,
               "type": "tutorial",
               "slug": "tutorial_chapter_6",
-              "title": "The Tully-Fisher Relation and Deming Regression",
+              "title": "Deming Regression for the Tully-Fisher Relation",
               "short": "Tutorial 6",
               "parent": "Linear Regression with Input Uncertainties"
             }
@@ -164,7 +164,7 @@ window.BOOK = {
               "chapter": 7,
               "type": "tutorial",
               "slug": "tutorial_chapter_7",
-              "title": "Distinguishing RGB and Red Clump Stars I",
+              "title": "Logistic Regression for Red Clump Stars",
               "short": "Tutorial 7",
               "parent": "Classification and Logistic Regression"
             }
@@ -184,7 +184,7 @@ window.BOOK = {
               "chapter": 8,
               "type": "tutorial",
               "slug": "tutorial_chapter_8",
-              "title": "Strong Lensing Classification with Multi-Class Logistic Regression",
+              "title": "Multi-Class Logistic Regression for Strong Lensing",
               "short": "Tutorial 8",
               "parent": "Multi-Class Classification"
             }
@@ -204,7 +204,7 @@ window.BOOK = {
               "chapter": 9,
               "type": "tutorial",
               "slug": "tutorial_chapter_9",
-              "title": "Distinguishing RGB and Red Clump Stars II",
+              "title": "Bayesian Logistic Regression for Red Clump Stars",
               "short": "Tutorial 9",
               "parent": "Bayesian Logistic Regression"
             }
@@ -251,7 +251,7 @@ window.BOOK = {
               "chapter": 11,
               "type": "tutorial",
               "slug": "tutorial_chapter_11a",
-              "title": "Clustering Stellar Populations",
+              "title": "K-means and Gaussian Mixtures for Stellar Populations",
               "short": "Tutorial 11a",
               "parent": "K-means and Gaussian Mixture Models"
             },
@@ -260,7 +260,7 @@ window.BOOK = {
               "chapter": 11,
               "type": "tutorial",
               "slug": "tutorial_chapter_11b",
-              "title": "Analyzing Quasar Spectra with Dimensionality Reduction and Clustering",
+              "title": "Gaussian Mixtures and PCA for Quasar Spectra",
               "short": "Tutorial 11b",
               "parent": "K-means and Gaussian Mixture Models"
             }
@@ -287,7 +287,7 @@ window.BOOK = {
               "chapter": 12,
               "type": "tutorial",
               "slug": "tutorial_chapter_12",
-              "title": "Stellar Mass Distributions and Monte Carlo Sampling",
+              "title": "Monte Carlo Sampling for Stellar Masses",
               "short": "Tutorial 12",
               "parent": "Sampling and Monte Carlo Methods"
             }
@@ -306,9 +306,18 @@ window.BOOK = {
               "n": 28,
               "chapter": 13,
               "type": "tutorial",
-              "slug": "tutorial_chapter_13",
-              "title": "Markov Chain Monte Carlo",
-              "short": "Tutorial 13",
+              "slug": "tutorial_chapter_13a",
+              "title": "Markov Chain Monte Carlo for Posterior Sampling",
+              "short": "Tutorial 13a",
+              "parent": "Markov Chain Monte Carlo"
+            },
+            {
+              "n": 29,
+              "chapter": 13,
+              "type": "tutorial",
+              "slug": "tutorial_chapter_13b",
+              "title": "Deconvolution with MCMC and Importance Sampling",
+              "short": "Tutorial 13b",
               "parent": "Markov Chain Monte Carlo"
             }
           ]
@@ -321,7 +330,7 @@ window.BOOK = {
       "blurb": "Gaussian processes and neural networks for flexible, expressive modeling.",
       "chapters": [
         {
-          "n": 29,
+          "n": 30,
           "chapter": 14,
           "type": "chapter",
           "slug": "chapter14",
@@ -330,7 +339,7 @@ window.BOOK = {
           "affil": "The Ohio State University",
           "tutorials": [
             {
-              "n": 30,
+              "n": 31,
               "chapter": 14,
               "type": "tutorial",
               "slug": "tutorial_chapter_14a",
@@ -339,18 +348,18 @@ window.BOOK = {
               "parent": "Gaussian Processes"
             },
             {
-              "n": 31,
+              "n": 32,
               "chapter": 14,
               "type": "tutorial",
               "slug": "tutorial_chapter_14b",
-              "title": "Gaussian Process Classification: From Continuous Functions to Discrete Outcomes",
+              "title": "Gaussian Process Classification for Stars and Galaxies",
               "short": "Tutorial 14b",
               "parent": "Gaussian Processes"
             }
           ]
         },
         {
-          "n": 32,
+          "n": 33,
           "chapter": 15,
           "type": "chapter",
           "slug": "chapter15",
@@ -359,45 +368,45 @@ window.BOOK = {
           "affil": "The Ohio State University",
           "tutorials": [
             {
-              "n": 33,
-              "chapter": 15,
-              "type": "tutorial",
-              "slug": "tutorial_chapter_15a",
-              "title": "Backpropagation and Introduction to PyTorch",
-              "short": "Tutorial 15a",
-              "parent": "Neural Networks"
-            },
-            {
               "n": 34,
               "chapter": 15,
               "type": "tutorial",
-              "slug": "tutorial_chapter_15b",
-              "title": "Autoencoders for Nonlinear Dimension Reduction",
-              "short": "Tutorial 15b",
+              "slug": "tutorial_chapter_15a",
+              "title": "Backpropagation and PyTorch",
+              "short": "Tutorial 15a",
               "parent": "Neural Networks"
             },
             {
               "n": 35,
               "chapter": 15,
               "type": "tutorial",
-              "slug": "tutorial_chapter_15c",
-              "title": "Mixture Density Networks: Modeling Stellar Lithium Abundance",
-              "short": "Tutorial 15c",
+              "slug": "tutorial_chapter_15b",
+              "title": "Autoencoders for Galaxy Images",
+              "short": "Tutorial 15b",
               "parent": "Neural Networks"
             },
             {
               "n": 36,
               "chapter": 15,
               "type": "tutorial",
+              "slug": "tutorial_chapter_15c",
+              "title": "Mixture Density Networks for Stellar Lithium Abundances",
+              "short": "Tutorial 15c",
+              "parent": "Neural Networks"
+            },
+            {
+              "n": 37,
+              "chapter": 15,
+              "type": "tutorial",
               "slug": "tutorial_chapter_15d",
-              "title": "Normalizing Flows for Astronomy",
+              "title": "Normalizing Flows for Stellar Abundances",
               "short": "Tutorial 15d",
               "parent": "Neural Networks"
             }
           ]
         },
         {
-          "n": 37,
+          "n": 38,
           "chapter": 16,
           "type": "chapter",
           "slug": "chapter16",
