@@ -76,8 +76,8 @@ SDSS DR17, with the classes of Hughes et al. (2022).
 
 The reader is a static site under `docs/`. Every push to `main` publishes it twice:
 a Vercel project serves `docs/` at statml.org, and GitHub Pages serves the same folder
-at tingyuansen.github.io/statml, the address printed in the book. Neither redirects to
-the other, so each stays reachable if a network blocks the other. `docs/` is rebuilt by
+at tingyuansen.github.io/statml as a mirror. Neither redirects to the other, so each
+stays reachable if a network blocks the other. `docs/` is rebuilt by
 `build_statml.py`:
 
 - **Chapters** are converted from the LaTeX sources with `pandoc`, with math kept raw
