@@ -38,14 +38,14 @@ statml.org and mirrored at [tingyuansen.github.io/statml](https://tingyuansen.gi
   year    = {2025}
 }
 
-@software{ting2025statisticaltutorial,
+@software{ting2026statisticaltutorial,
   author    = {Ting, Yuan-Sen},
   title     = {tingyuansen/statml: Statistical Machine Learning for Astronomy — Tutorials (v1.0)},
-  year      = {2025},
+  year      = {2026},
   publisher = {Zenodo},
   version   = {v1.0},
-  doi       = {10.5281/zenodo.16495692},
-  url       = {https://doi.org/10.5281/zenodo.16495692}
+  doi       = {10.5281/zenodo.23802476},
+  url       = {https://doi.org/10.5281/zenodo.23802476}
 }
 ```
 
