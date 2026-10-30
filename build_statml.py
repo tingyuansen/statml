@@ -14,6 +14,8 @@ textbook chapter alongside its hands-on tutorial(s):
 
 Run:  python3 build_statml.py            (chapters + tutorials + manifest)
       python3 build_statml.py --figures  (also re-convert figures, slow)
+Needs pandoc, pdflatex, pdftoppm (poppler) and beautifulsoup4.
+Preview: cd docs && python3 -m http.server 8000
 """
 from __future__ import annotations
 
